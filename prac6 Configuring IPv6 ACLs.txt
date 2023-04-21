@@ -1,0 +1,217 @@
+pc1>s1 & pc2>s2
+first s2>R1 then s1>R1 and so on....
+R1 & R2 s0/1/0
+R1 & R2 s0/1/1
+
+IP ADDRESS CONFIGURATION
+
+IN R1
+
+R1(config)#   ipv6 unicast-routing
+
+For G0/0
+R1(config)# int g0/1
+ipv6 enable
+no shut
+
+R1(config-if)#   ipv6 address 2001:DB8:1:10::1/64 
+end
+
+PC1 > Desktop > IP Configuration > 
+In IPv6 Address
+2001:DB8:1:10::2       /      64
+
+IPv6 Gateway
+2001:DB8:1:10::1
+
+Ping PC1 to R1 > ping 2001:DB8:1:10::1    (success)
+
+
+For G0/1
+R1(config)# int g0/0
+ipv6 enable
+no shut
+
+R1(config-if)#   ipv6 address 2001:DB8:1:11::1/64 
+end
+
+PC2 > Desktop > IP Configuration > 
+In IPv6 Address
+2001:DB8:1:11::2       /      64
+
+IPv6 Gateway
+2001:DB8:1:11::1
+
+Ping PC2 to R1 > ping 2001:DB8:1:10::1     (success)
+
+
+IN R3
+
+R3(config)#   ipv6 unicast-routing
+
+For G0/0
+R3(config)# int g0/0
+ipv6 enable
+no shut
+
+R3(config-if)#   ipv6 address 2001:DB8:1:30::1/64 
+end
+
+PC1 > Desktop > IP Configuration > 
+In IPv6 Address
+2001:DB8:1:30::30       /      64
+
+IPv6 Gateway
+2001:DB8:1:30::1
+
+
+IN R1
+
+For SE0/1/0
+R1(config)# int se 0/1/0
+ipv6 enable
+no shut
+
+R1(config-if)#   ipv6 address 2001:DB8:1:20::1/64 
+end
+
+
+IN R2
+
+R2(config)#   ipv6 unicast-routing
+
+For SE0/1/0
+R2(config)# int se 0/1/0
+ipv6 enable
+no shut
+
+R2(config-if)#   ipv6 address 2001:DB8:1:20::2/64 
+
+For SE0/1/1
+R2(config)# int se 0/1/1
+ipv6 enable
+no shut
+
+R2(config-if)#   ipv6 address 2001:DB8:1:25::2/64 
+end
+
+
+IN R3
+
+For SE0/1/1
+R3(config)# int se 0/1/1
+ipv6 enable
+no shut
+
+R3(config-if)#   ipv6 address 2001:DB8:1:25::1/64 
+end
+
+
+IN R1
+
+R1(config)# ipv6 route 2001:DB8:1:25::/64 2001:DB8:1:20::2 
+ipv6 route 2001:DB8:1:30::/64 2001:DB8:1:20::2 
+
+
+IN R2
+R2(config)#  ipv6 route 2001:DB8:1:10::/64 2001:DB8:1:20::1 
+ipv6 route 2001:DB8:1:11::/64 2001:DB8:1:20::1
+ipv6 route 2001:DB8:1:30::/64 2001:DB8:1:25::1
+
+
+IN R3
+R3(config)#  ipv6 route 2001:DB8:1:20::/64 2001:DB8:1:25::2
+ipv6 route 2001:DB8:1:10::/64 2001:DB8:1:25::2
+ipv6 route 2001:DB8:1:11::/64 2001:DB8:1:25::2
+
+In PC1 > Web Browser
+ip of server in URL
+
+2001:DB8:1:30::30
+
+In PC2 > Web Browser
+ip of server in URL
+
+2001:DB8:1:30::30
+
+Ping server to PC1 & PC2
+
+
+In R1
+R1(config)# ipv6 ?
+
+R1(config)# ipv6 access-list ?
+
+R1(config)# ipv6 access-list BLOCK_HTTP
+R1(config-ipv6-acl)#  deny ?
+
+deny tcp ?
+deny tcp any ?
+deny tcp any host 2001:DB8:1:30::30 ?
+deny tcp any host 2001:DB8:1:30::30 eq?
+
+deny tcp any host 2001:DB8:1:30::30 eq www
+deny tcp any host 2001:DB8:1:30::30 eq 443
+permit ipv6 any any
+exit
+
+R1(config)# int g0/0
+ipv6 ?
+
+ipv6 traffic-filter BLOCK_HTTP in
+
+
+IN PC1 > Browser
+ip of server in URL
+
+2001:DB8:1:30::30  (It should allow )
+
+
+IN PC2 > Browser
+ip of server in URL
+
+2001:DB8:1:30::30  (It should not allow )
+
+
+IN PC1 
+ping PC1 to Server
+ping 2001:DB8:1:30::30
+(it should ping)
+
+IN PC2
+ping PC2 to Server
+ping 2001:DB8:1:30::30
+(it should ping)
+
+
+PART 1 DONE
+
+
+PART 2(do only if miss tells to do) 
+(Only disallow ping from all components to server)
+
+IN R3
+
+R3(config)#   ipv6 access-list BLOCK_ICMP
+deny icmp any any
+permit ipv6 any any
+exit
+int g0/0
+ipv6 traffic-filter BLOCK_ICMP out
+
+
+IN PC1 
+ping PC1 to Server
+ping 2001:DB8:1:30::30
+(it should not ping)
+
+IN PC2
+ping PC2 to Server
+ping 2001:DB8:1:30::30
+(it should ping)
+
+
+IN PC1 > Browser
+ip of server in URL
+
+2001:DB8:1:30::30  (It should allow )

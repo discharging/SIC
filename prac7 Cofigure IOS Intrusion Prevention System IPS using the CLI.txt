@@ -1,0 +1,147 @@
+PCA>S1 & SERVER>S1>R1>R2>R3>S3>PCC
+
+On All Routers
+R1(config)#  enable secret enpa55
+line console 0
+password conpa55
+login
+exit
+
+R1(config)#  ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local
+exit
+crypto key generate rsa
+
+(1024)
+
+R1
+R1(config)#  router ospf 1
+network 192.168.1.0 0.0.0.255 area 0
+network 10.1.1.0 0.0.0.3 area 0
+exit
+
+R2
+R2(config)#  router ospf 1
+network 10.1.1.0 0.0.0.3 area 0
+network 10.2.2.0 0.0.0.3 area 0
+exit
+
+R3
+R3(config)#  router ospf 1
+network 10.2.2.0 0.0.0.3 area 0
+network 192.168.3.0 0.0.0.255 area 0
+exit
+
+Only In R1
+exit
+R1# show version
+
+
+conf t
+
+R1(config)#  license boot module c1900 technology-package securityk9
+
+(yes)
+
+exit
+
+copy run start
+
+reload 
+
+en
+
+show version
+
+See if the Ping PC-A to PC-C and PC-C to PC-A is successful
+
+Only In R1
+
+R1#  mkdir ipsdir
+
+conf t
+
+ip ips config location flash:ipsdir
+ip ips name iosips
+ip ips notify log
+exit
+
+R1# clock set 03:21:44 20 APR 2023  (current time)
+
+conf t
+
+service timestamps log datetime msec
+logging host 192.168.1.50
+ip ips signature-category
+category all
+retired true
+exit
+category ios_ips basic
+retired false
+exit
+exit
+
+R1(config)#  interface g0/0
+ip ips iosips out
+exit
+
+exit
+
+R1#  show ip ips all
+
+it should show :-
+Global Overrides Status: Enabled
+Global Filters Status: Enabled
+
+Total Active Signatures: 1
+Total Inactive Signatures: 0
+
+Category all
+	Retire: True
+Category ios_ips basic
+	Retire: False
+
+
+In SERVER (i.e. Syslog) > services > SYSLOG
+you will see  the messages 
+
+
+Only In R1
+
+conf t
+
+ip ips signature-definition
+signature 2004 0
+status
+retired false
+enabled true
+exit
+engine
+event-action produce-alert 
+event-action deny-packet-inline
+exit
+exit
+exit
+
+exit
+R1#  show ip ips all
+
+Ping PC-C to PC-A (it should not ping)
+(request timed out)
+
+Ping PC-A to PC-C (it should ping)
+
+In Server > services > Syslog
+you will see  the messages 
+
+
+Result
+Ping PC-C to PC-A (it should not ping)
+(request timed out)
+
+Ping PC-A to PC-C (it should ping)
+
+In Server > services > Syslog
+you will see  the messages 

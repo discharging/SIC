@@ -1,0 +1,46 @@
+PC1 needs only FTP access 
+while PC2 needs only web access. 
+Both computers are able to ping the server, but not each other. 
+
+In R1
+R1(config)# access-list 100 permit tcp 172.22.34.64 0.0.0.31 host 172.22.34.62 eq ftp
+
+R1(config)# access-list 100 permit icmp 172.22.34.64 0.0.0.31 host 172.22.34.62 
+
+R1(config-if)# int gig0/0
+
+R1(config-if)# ip access-group 100 in 
+
+In PC 1
+in comman prompt
+Ping from PC1 to Server.  username and password are both cisco.
+
+ping 172.22.34.62
+
+ftp 172.22.34.62
+
+ftp> quit
+
+In R1
+
+R1(config)# ip access-list extended HTTP_ONLY
+
+R1(config-ext-nacl)# permit tcp 172.22.34.96 0.0.0.15 host 172.22.34.62 eq www
+
+R1(config-ext-nacl)# permit icmp 172.22.34.96 0.0.0.15 host 172.22.34.62
+
+R1(config)# interface gigabitEthernet 0/1
+
+R1(config-if)# ip access-group HTTP_ONLY in 
+
+in PC2 
+in comman prompt
+
+ping  172.22.34.62
+
+ftp  172.22.34.62  
+(it must not connect)
+
+in pc 2 in desktop > web browser > 
+in url type > http://172.22.34.62
+the connection should be successfull

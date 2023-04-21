@@ -1,0 +1,132 @@
+In All Routers
+
+R1(config)#  enable secret enpa55
+line console 0
+password conpa55
+login
+exit
+
+ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local
+exit
+
+crypto key generate rsa
+
+
+IN R2
+
+R2(config)#  int loopback 0
+R2(config-if)#  ip address 192.168.2.1 255.255.255.0
+no shut
+exit
+
+
+In R1
+
+R1(config)#  ip route 192.168.3.0 255.255.255.0 10.1.1.2
+ip route 10.2.2.0 255.255.255.252 10.1.1.2
+ip route 192.168.2.0 255.255.255.0 10.1.1.2
+
+In R2
+
+ip route 192.168.1.0 255.255.255.0 10.1.1.1
+ip route 192.168.3.0 255.255.255.0 10.2.2.1
+
+In R3
+
+ip route 192.168.1.0 255.255.255.0 10.2.2.2
+ip route 192.168.2.0 255.255.255.0 10.2.2.2
+ip route 10.1.1.0 255.255.255.252 10.2.2.2
+
+
+In PCA(i.e. Server)
+
+ping PCA to PCC
+ping 192.168.3.3
+
+ping PCA to R2 (L0o)
+ping 192.168.2.1
+
+SSH to R2
+ssh -l Admin 192.168.2.1
+pass = adminpa55
+
+exit
+
+
+In PCC
+
+ping PCC to PCA
+ping 192.168.1.3
+
+ping PCC to R2 (L0o)
+ping 192.168.2.1
+
+SSH to R2
+ssh -l Admin 192.168.2.1
+pass = adminpa55
+
+exit
+
+
+In PCA(i.e. Server) > Desktop > Web Browser
+IP address of PCA in URL to display web page
+192.168.1.3
+
+
+In All Routers
+
+R1(config)# access-list 10 permit host 192.168.3.3
+line vty 0 4
+access-class 10 in
+exit
+  
+In PCC 
+SSH to R2
+ssh -l Admin 192.168.2.1 (Successful)
+
+In PCA (Server)
+SSH to R2
+ssh -l Admin 192.168.2.1 (Unsuccessful, it should deny)
+
+
+In PCA (Server) > Services > HTTP
+Turn Off HTTP and Turn On HTTPS
+
+In R1
+
+R1(config)# access-list 120 permit udp any host 192.168.1.3 eq domain
+access-list 120 permit tcp any host 192.168.1.3 eq smtp
+access-list 120 permit tcp any host 192.168.1.3 eq ftp
+access-list 120 deny tcp any host 192.168.1.3 eq 443
+access-list 120 permit tcp host 192.168.3.3 host 10.1.1.1 eq 22
+
+int se0/1/0
+ip access-group 120 in
+
+exit
+
+In PCC > Desktop > Web Browser
+IP address of PCA in URL to display web page
+192.168.1.3
+(It should deny both http & https, Unsuccessful)
+
+In PCA
+Ping PCA to R2(L0o)
+ping 192.168.2.1
+(It should be unsuccessful)
+
+
+In R1
+
+R1(config)#  access-list 120 permit icmp any any echo-reply
+access-list 120 permit icmp any any unreachable
+access-list 120 deny icmp any any
+access-list 120 permit ip any any
+
+RESULT
+
+//Ping command with echo-reply - Successful
+i.e. PCA ping with R2 (l0o i.e loop) Successful

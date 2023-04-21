@@ -1,0 +1,134 @@
+On All Routers
+R1(config)#  line console 0
+password conpa55
+login
+exit
+
+R1(config)#  line vty 0 4
+password vtypa55
+login
+exit
+
+R1(config)#  enable secret enpa55
+
+R1(config)#  ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 0 4
+login local
+exit
+
+crypto key generate rsa
+
+
+R1
+
+R1(config)# ip route 10.2.2.0 255.255.255.252 10.1.1.2
+ip route 192.168.3.0 255.255.255.0 10.1.1.2
+
+R2
+ip route 192.168.1.0 255.255.255.0 10.1.1.1
+ip route 192.168.3.0 255.255.255.0 10.2.2.1
+
+R3
+ip route 192.168.1.0 255.255.255.0 10.2.2.2
+ip route 10.1.1.0 255.255.255.252 10.2.2.2
+
+In PC-A (i.e. Server) 
+Ping PC-A(i.e. Server) to PC-C (it should ping)
+
+access R2 using SSH from PC-A 
+ssh -l Admin 10.2.2.2
+
+(password=adminpa55)
+
+In PC-A (i.e. Server) > desktop> Web Browser
+Open Web Browser to PC-C
+
+In PC-C (i.e. Server) > desktop> Web Browser
+Open Web Browser to PC-A
+
+ONLY IN R3
+
+R3#  show version
+
+R3(config)#  license boot module c1900 technology-package securityk9 
+
+R3#  copy run start
+
+R3#  reload
+
+show version
+(Security Should be Enabled now)
+
+R3(config)# zone security IN-ZONE 
+exit
+
+R3(config)# zone security OUT-ZONE
+exit
+
+R3(config)# access-list 101 permit ip 192.168.3.0 0.0.0.255 any
+
+R3(config)#  class-map type inspect match-all IN-NET-CLASS-MAP
+match access-group 101
+exit 
+
+R3(config)# policy-map type inspect IN-2-OUT-PMAP
+
+R3(config-pmap)# class type inspect IN-NET-CLASS-MAP
+inspect
+exit
+exit
+
+R3(config)#   zone-pair security IN-2-OUT-ZPAIR source IN-ZONE destination OUT-ZONE
+service-policy type inspect IN-2-OUT-PMAP
+exit
+
+R3(config)#  int gig0/0
+zone-member security IN-ZONE
+exit
+
+int se0/1/0
+zone-member security OUT-ZONE
+exit
+
+exit
+
+R3#   copy run start
+
+R3#   reload
+
+In PC-C 
+Ping PC-C to PC-A(Server) (It should ping)
+
+access R2 using SSH from PC-C
+ssh -l Admin 10.2.2.2
+
+(password=adminpa55)
+
+R3#   show policy-map type inspect zone-pair sessions
+
+In PC-C (i.e. Server) > desktop> Web Browser
+Open Web Browser to PC-A
+
+
+
+In PC-A
+
+SSH from PC-A to R2
+ssh -l Admin 10.2.2.2
+
+ping PC-A to PC-C (ping should fail)
+
+In R2 in R2#
+ping R2 to PC-C (ping should fail)
+
+RESULT
+
+ping PC-A to PC-C (ping should fail)
+
+ping R2 to PC-C (ping should fail)
+
+Open SSH session from PC to R2
+Open FTP session from PC to Server
+
+R3#   show policy-map type inspect zone-pair sessions

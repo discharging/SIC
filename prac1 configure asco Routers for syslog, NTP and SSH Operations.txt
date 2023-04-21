@@ -1,0 +1,134 @@
+diagram: -
+Server = 2
+PC = 1
+Switches 2960 - 24TT = 2
+router 1941 = 3
+
+to access R3 from PC-C and R2
+PART 1 - : Configure OSPF MD5 Authentication
+
+1. do this in all routers
+R1(config)#line vty 0 4
+R1(config-line)#password vtypa55
+R1(config-line)#login
+R1(config-line)#enable secret enpa55
+
+2. configure ospf 
+
+R1(config)#router ospf 1
+R1(config-router)#network 192.168.1.0 0.0.0.255 area 0
+R1(config-router)#network 10.1.1.0 0.0.0.3 area 0
+
+R2(config)#router ospf 2
+R2(config-router)#network 10.1.1.0 0.0.0.3 area 0
+R2(config-router)#network 10.2.2.0 0.0.0.3 area 0
+
+R3(config)#router ospf 3
+R3(config-router)#network 192.168.3.0 0.0.0.255 area 0
+R3(config-router)#network 10.2.2.0 0.0.0.3 area 0
+
+3. on all routers for all router ospf 1
+R1(config)#router ospf 1
+R1(config-router)#area 0 authentication message-digest
+
+4. on all routers
+
+R1(config)# interface s0/1/0
+R1(config-if)# ip ospf message-digest-key 1 md5 MD5pa55
+exit
+
+R2(config)# interface s0/1/0
+R2(config-if)# ip ospf message-digest-key 1 md5 MD5pa55
+exit
+R2(config)# interface s0/1/1
+R2(config-if)# ip ospf message-digest-key 1 md5 MD5pa55
+exit
+
+R3(config)# interface s0/1/0
+R3(config-if)# ip ospf message-digest-key 1 md5 MD5pa55
+exit
+
+5. on all routers
+R1#show ip ospf interface
+
+PART 2 -  Configure NTP 
+
+1.in server 1 i.e. PC-A -> key is 1 and password is NTPpa55
+
+2. write this same command on all router
+ntp server 192.168.1.5
+ntp update-calendar
+
+example : 
+R1(config)# ntp server 192.168.1.5
+R1(config)# ntp update-calendar
+
+3.in all router (output must show current time)
+R1# show clock 
+
+4. on all router
+
+ntp authenticate
+ntp trusted-key 1
+ntp authentication-key 1 md5 NTPpa55
+
+example:
+R1(config)# ntp authenticate
+R1(config)# ntp trusted-key 1
+R1(config)# ntp authentication-key 1 md5 NTPpa55
+
+5.on all router
+
+R1(config)# service timestamps log datetime msec
+R2(config)# service timestamps log datetime msec
+R3(config)# service timestamps log datetime msec
+
+3.in all router (output must show current time)
+R1# show clock 
+
+
+6.on all router
+
+R1(config)# logging host 192.168.1.6
+R2(config)# logging host 192.168.1.6
+R3(config)# logging host 192.168.1.6
+
+7. on all router 
+R# show logging
+
+SYSLOG
+8.in server 1 i.e. PC-B > in services> syslog you will see a table
+
+PART 3  SSH
+
+1. In Router 3 
+R3(config)# ip domain-name ccnasecurity.com
+R3(config)# username SSHadmin privilege 15 secret sshpa55 
+R3(config)# line vty 0 4
+R3(config-line)# login local
+R3(config-line)# transport input ssh
+exit
+R3(config)# crypto key zeroize rsa
+(if RSA Keys not found then generate )
+R3(config)# crypto key generate rsa
+R3#show ip ssh
+
+(for setting timout)
+R3(config)# ip ssh time-out 90
+R3(config)# ip ssh authentication-retries 2
+R3(config)# ip ssh version 2
+ip ssh time-out 90
+ip ssh authentication-retries 2
+ip ssh version 2
+
+2. In PC-C (computer) to access R3 from PC-C
+comand prompt
+PC> telnet 192.168.3.1
+PC>  ssh –l SSHadmin 192.168.3.1
+password sshpa55 
+
+2. In R2 to access R3 from R2
+R2# ssh –v 2 –l SSHadmin 10.2.2.1
+
+password sshpa55 
+

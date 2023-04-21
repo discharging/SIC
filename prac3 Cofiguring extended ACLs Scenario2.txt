@@ -1,0 +1,152 @@
+pass after entering cli enpa55
+pass after en enpa55
+pass after ssh adminpa55
+On all switches
+S1
+int vlan 1
+ip address 10.101.117.50 255.255.255.248 
+no shut
+
+ip default-gateway 10.101.117.49 
+
+S2
+int vlan 1
+ip address 10.101.117.34 255.255.255.240 
+no shut
+
+ip default-gateway 10.101.117.33
+
+S3
+int vlan 1
+ip address 10.101.117.2 255.255.255.224 
+no shut
+
+ip default-gateway 10.101.117.1
+
+on all Switches and Router
+
+enable secret enpa55
+line console 0
+password tyit
+login
+
+example:
+Router(config)#enable secret enpa55
+Router(config-line)#line console 0
+Router(config-line)#password tyit
+Router(config-line)#login
+
+
+check pinging from PCA to PCB
+ping 10.101.117.35
+
+PCA to switch3 
+ping 10.101.117.2
+
+PCB to switch3
+ping 10.101.117.2
+
+Switch 1
+Switch(config)#ip domain-name ccnasecurity.com
+line vty 04
+login local
+crypto key generate rsa
+
+Switch 2 & 3
+Switch(config)#ip domain-name ccnasecurity.com
+username admin secret adminpa55
+line vty 04
+login local
+crypto key generate rsa
+
+1024
+
+In PCA 
+pass = adminpa55
+press enter 2 times
+command prompt
+SSH FROM PCA TO SWB
+ssh -l Admin 10.101.117.34
+exit
+
+SSH FROM PCA TO SWC
+ssh -l Admin 10.101.117.2
+
+In PCB
+pass = adminpa55
+press enter 2 times
+command prompt
+SSH FROM PCB TO SWA
+ssh -l Admin 10.101.117.50
+exit
+
+SSH FROM PCB TO SWC
+ssh -l Admin 10.101.117.2
+(dont exit)
+en
+password = enpa55
+ssh -l Admin 10.101.117.50
+pass = adminpa55
+exit
+
+in SWC#
+ssh -l Admin 10.101.117.34
+pass = adminpa55
+
+exit
+exit till C>
+
+Part 3
+
+in Router
+
+access-list 199 permit tcp 10.101.117.32 0.0.0.15 10.101.117.0 0.0.0.31 eq 22
+access-list 199 permit icmp any any
+int gig 0/2
+ip access-group 199 out
+
+example:
+Router(config)# access-list 199 permit tcp 10.101.117.32 0.0.0.15 10.101.117.0 0.0.0.31 eq 22
+Router(config)#access-list 199 permit icmp any any
+Router(config)#int gig 0/2
+Router(config-if)#ip access-group 199 out
+
+
+In PCB 
+ping pcb to pca
+ping 10.101.117.51
+
+ping pcb to SWV
+ping 10.101.117.2
+
+SSH PCB TO SWC
+ssh -l Admin 10.101.117.2
+pass=adminpa55
+
+In PCA
+ping pca to pcb
+ping 10.101.117.35
+
+ping pcb to SWV
+ping 10.101.117.2
+
+SSH PCA TO SWC
+ssh -l Admin 10.101.117.2
+pass=adminpa55
+(iy must show disconnected SSH PCA TO SWC)
+
+SSH PCA TO SWB
+ssh -l Admin 10.101.117.34
+
+en
+pass= enpa55
+SSH SWB TO SWC
+ssh -l Admin 10.101.117.2
+
+FINISH
+Result should be
+ping from PCB to SWC = successful
+ping from PCA to SWC = successful
+
+SSH from PCB to SWC = successful
+SSH from PCA to SWC = unsuccessful
